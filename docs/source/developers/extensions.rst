@@ -1,5 +1,63 @@
-Authoring a configurable extension application
-==============================================
+===================================
+Authoring Jupyter Server Extensions
+===================================
+
+A Jupyter Server extension is typically a module or package that extends to Server's REST API/endpoints—i.e. adds extra request handlers to Server's Tornado Web Application.
+
+Basic server extensions
+=======================
+
+The simplest way to write a Jupyter Server extension is to write an extension module with a ``_load_jupyter_server_extension`` function. This function should take a single argument, an instance of the ``ServerApp``.
+
+.. code-block:: python
+
+    def _load_jupyter_server_extension(serverapp):
+        """
+        This function is called when the extension is loaded.
+        """
+        pass
+
+
+To make this extension discoverable to Jupyter Server, there are two steps. First, the extension module must define a `_jupyter_server_extension_paths()` function that returns some metadata about the extension entry-points in the module. This informs Jupyter Server what type of extension is being loaded and where to find the ``_load_jupyter_server_extension``.
+
+.. code-block:: python
+
+    def _jupyter_server_extension_paths():
+        """
+        Returns a list of dictionaries with metadata describing
+        where to find the `_load_jupyter_server_extension` function.
+        """
+        return [
+            {
+                "module": "my_extension"
+            }
+        ]
+
+
+Second, the extension must be listed in the user's ``jpserver_extensions`` config trait. This can be manually added by users in their ``jupyter_server_config.py`` file:
+
+.. code-block:: python
+
+    c.ServerApp.jpserver_extensions = {
+        "my_extension": True
+    }
+
+
+Alternatively, an extension can automatically enable itself by creating the following JSON in the ``jupyter_server_config.d`` directory on installation. See XX for more details.
+
+.. code-block:: json
+
+    {
+        "ServerApp": {
+            "jpserver_extensions": {
+                "my_extension": true
+            }
+        }
+    }
+
+
+Configurable extension application
+==================================
 
 Jupyter Server offers a base class, ``ExtensionApp``, for authoring configurable Jupyter Server extensions. This class handles most of the boilerplate code for setting up config, CLI, and registration with Jupyter Server.
 

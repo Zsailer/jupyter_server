@@ -9,6 +9,7 @@ override the notebook's defaults with your own custom behavior.
 .. toctree::
     :maxdepth: 2
 
+    extensions
     contents
     savehooks
     handlers

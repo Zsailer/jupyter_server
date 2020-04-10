@@ -5,11 +5,10 @@ These pages target people writing Jupyter Web applications and server extensions
 
 .. toctree::
    :caption: Developers
-   :maxdepth: 1
+   :maxdepth: 2
    :name: developers
 
    dependency
-   basic-extension
-   configurable-extension
+   extensions
    rest-api
    ../other/changelog

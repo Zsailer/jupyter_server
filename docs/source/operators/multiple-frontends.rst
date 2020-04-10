@@ -1,7 +1,15 @@
-Managing multiple extensions
-----------------------------
+Jupyter Frontends (and other server extensions)
+-----------------------------------------------
 
-One of the major benefits of Jupyter Server is that you can run serve multiple Jupyter frontend applications above the same Tornado web server. That's because every Jupyter frontend application is now a server extension. When you run a Jupyter Server will multiple extensions enabled, each extension appends its own set of handlers and static assets to the server.
+One of the changes (and benefits) that Jupyter Server brought was multiple Jupyter frontend applications can now run on top of the same Tornado web server. That's because every Jupyter frontend application is a server **extension**. When you run a Jupyter Server will multiple extensions enabled, each extension appends its own set of handlers and static assets to the server.
+
+A few examples of known, supported Jupyter frontends include:
+
+* Jupyter NBClassic (drop-in replacement for Jupyter Notebook)
+* Jupyter Lab
+* Voila
+
+When the above extension are installed, they automatically plug into Jupyter Server using its extension registry.
 
 Listing extensions
 ~~~~~~~~~~~~~~~~~~
