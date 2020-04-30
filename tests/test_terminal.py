@@ -81,7 +81,7 @@ async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
     message_stdout = ''
     while True:
         try:
-            message = await asyncio.wait_for(ws.read_message(), timeout=1.0)
+            message = await asyncio.wait_for(ws.read_message(), timeout=5.0)
         except asyncio.TimeoutError:
             break
 
