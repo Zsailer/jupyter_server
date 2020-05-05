@@ -22,54 +22,44 @@ def terminal_path(tmp_path):
     shutil.rmtree(str(subdir), ignore_errors=True)
 
 
-# async def test_terminal_create(fetch):
-#     await fetch(
-#         'api', 'terminals',
-#         method='POST',
-#         allow_nonstandard_methods=True,
-#     )
+async def test_terminal_create(fetch):
+    await fetch(
+        'api', 'terminals',
+        method='POST',
+        allow_nonstandard_methods=True,
+    )
 
-#     resp_list = await fetch(
-#         'api', 'terminals',
-#         method='GET',
-#         allow_nonstandard_methods=True,
-#     )
+    resp_list = await fetch(
+        'api', 'terminals',
+        method='GET',
+        allow_nonstandard_methods=True,
+    )
 
-#     data = json.loads(resp_list.body.decode())
+    data = json.loads(resp_list.body.decode())
 
-#     assert len(data) == 1
-
-
-# async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
-#     resp_create = await fetch(
-#         'api', 'terminals',
-#         method='POST',
-#         body=json.dumps({'cwd': str(terminal_path)}),
-#         allow_nonstandard_methods=True,
-#     )
-
-#     data = json.loads(resp_create.body.decode())
-#     term_name = data['name']
-
-#     resp_get = await fetch(
-#         'api', 'terminals', term_name,
-#         method='GET',
-#         allow_nonstandard_methods=True,
-#     )
-
-#     data = json.loads(resp_get.body.decode())
-
-#     assert data['name'] == term_name
+    assert len(data) == 1
 
 
-# @pytest.fixture
-# def read_all_messages():
-#     # Because the Tornado Websocket client has no way to cancel
-#     # a pending read, we have to keep track of them...
-#     async def _(ws):
+async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
+    resp_create = await fetch(
+        'api', 'terminals',
+        method='POST',
+        body=json.dumps({'cwd': str(terminal_path)}),
+        allow_nonstandard_methods=True,
+    )
 
+    data = json.loads(resp_create.body.decode())
+    term_name = data['name']
 
-#     return _
+    resp_get = await fetch(
+        'api', 'terminals', term_name,
+        method='GET',
+        allow_nonstandard_methods=True,
+    )
+
+    data = json.loads(resp_get.body.decode())
+
+    assert data['name'] == term_name
 
 
 async def test_terminal_create_with_cwd(
@@ -90,12 +80,9 @@ async def test_terminal_create_with_cwd(
     ws = await ws_fetch(
         'terminals', 'websocket', term_name
     )
-    await ws.write_message(json.dumps(['stdin', 'pwd\r\n']))
-    # Terminal may take a few seconds to respond over stdout.
-    await asyncio.sleep(5)
+    await ws.write_message(json.dumps(['stdin', 'pwd\r']))
 
     messages = ""
-
     while True:
         try:
             response = await asyncio.wait_for(ws.read_message(), timeout=1.0)
@@ -106,6 +93,5 @@ async def test_terminal_create_with_cwd(
         if response[0] == "stdout":
             messages += response[1]
 
-    # messages = await read_all_messages(ws)
     ws.close()
     assert str(terminal_path) in messages
