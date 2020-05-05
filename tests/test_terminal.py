@@ -62,7 +62,40 @@ async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
     assert data['name'] == term_name
 
 
-async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
+@pytest.fixture
+def read_all_messages():
+    # Because the Tornado Websocket client has no way to cancel
+    # a pending read, we have to keep track of them...
+    async def _(ws):
+        messages = ""
+
+        pending_read = None
+        while True:
+            if pending_read is None:
+                pending_read = ws.read_message()
+
+            try:
+                response = await asyncio.wait_for(pending_read, timeout=1.0)
+            except asyncio.TimeoutError:
+                break
+
+            if response:
+                response = json.loads(response)
+                if response[0] == "stdout":
+                    messages += response[1]
+                pending_read = None
+
+
+        return messages
+    return _
+
+
+async def test_terminal_create_with_cwd(
+    fetch,
+    ws_fetch,
+    read_all_messages,
+    terminal_path
+):
     resp = await fetch(
         'api', 'terminals',
         method='POST',
@@ -79,22 +112,8 @@ async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
 
     await ws.write_message(json.dumps(['stdin', 'pwd\r\n']))
 
-    message_stdout = ''
-    while True:
-        # Wait for messages from the websocket
-        try:
-            message = await asyncio.wait_for(ws.read_message(), timeout=10.0)
-        except asyncio.TimeoutError:
-            break
-
-        # If websocket closes, don't try to parse the message.
-        if message is None:
-            break
-
-        message = json.loads(message)
-        if message[0] == 'stdout':
-            message_stdout += message[1]
+    messages = await read_all_messages(ws)
 
     ws.close()
 
-    assert str(terminal_path) in message_stdout
+    assert str(terminal_path) in messages
