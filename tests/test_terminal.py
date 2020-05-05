@@ -4,6 +4,7 @@ import pytest
 import json
 import asyncio
 import sys
+import time
 
 # Skip this whole module on Windows. The terminal API leads
 # to timeouts on Windows CI.
@@ -76,17 +77,20 @@ async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
         'terminals', 'websocket', term_name
     )
 
-    ws.write_message(json.dumps(['stdin', 'pwd\r\n']))
+    await ws.write_message(json.dumps(['stdin', 'pwd\r\n']))
 
     message_stdout = ''
     while True:
+        # Wait for messages from the websocket
         try:
             message = await asyncio.wait_for(ws.read_message(), timeout=5.0)
         except asyncio.TimeoutError:
             break
 
-        message = json.loads(message)
+        if message is None:
+            break
 
+        message = json.loads(message)
         if message[0] == 'stdout':
             message_stdout += message[1]
 
