@@ -82,6 +82,7 @@ def read_all_messages():
                 continue
 
             response = json.loads(response)
+            print(f"\n\n\n{response}\n\n\n")
             if response[0] == "stdout":
                 messages += response[1]
 
