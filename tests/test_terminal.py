@@ -104,14 +104,16 @@ async def test_terminal_create_with_cwd(
 
     data = json.loads(resp.body.decode())
     term_name = data['name']
-    await asyncio.sleep(10)
 
+    await asyncio.sleep(10)
 
     ws = await ws_fetch(
         'terminals', 'websocket', term_name
     )
 
-    await ws.write_message(json.dumps(['stdin', 'pwd\r\n']))
+    print(type(ws))
+
+    await ws.write_message(json.dumps(['stdin', 'pwd\r\n']).encode("utf-8"))
 
     messages = await read_all_messages(ws)
 
