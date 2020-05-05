@@ -69,24 +69,19 @@ def read_all_messages():
     async def _(ws):
         messages = ""
 
-        pending_read = None
+        async def read():
+            response = await ws.read_message()
+            return json.loads(response)
+
         while True:
-            if pending_read is None:
-                pending_read = ws.read_message()
-
             try:
-                response = await asyncio.wait_for(pending_read, timeout=1.0)
+                response = await asyncio.wait_for(read(), timeout=1.0)
             except asyncio.TimeoutError:
-                break
+                return messages
 
-            if response:
-                response = json.loads(response)
-                if response[0] == "stdout":
-                    messages += response[1]
-                pending_read = None
+            if response[0] == "stdout":
+                messages += response[1]
 
-
-        return messages
     return _
 
 
