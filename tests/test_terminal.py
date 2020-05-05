@@ -72,6 +72,7 @@ def read_all_messages():
         i = 0
         while i < 20:
             i += 1
+            print(f"\n\n\n{i}\n\n\n")
             try:
                 response = await asyncio.wait_for(ws.read_message(), timeout=1.0)
             except asyncio.TimeoutError:
