@@ -75,7 +75,6 @@ async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
 async def test_terminal_create_with_cwd(
     fetch,
     ws_fetch,
-    read_all_messages,
     terminal_path
 ):
     resp = await fetch(
