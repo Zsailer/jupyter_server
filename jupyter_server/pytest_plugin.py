@@ -224,7 +224,8 @@ def ws_fetch(auth_header, http_port):
         req = tornado.httpclient.HTTPRequest(
             url,
             headers=auth_header,
-            connect_timeout=120
+            connect_timeout=120,
+            request_timeout=120
         )
         return tornado.websocket.websocket_connect(req)
     return client_fetch
