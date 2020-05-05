@@ -77,7 +77,7 @@ async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
         'terminals', 'websocket', term_name
     )
 
-    await ws.write_message(json.dumps(['stdin', 'pwd\r\n']))
+    ws.write_message(json.dumps(['stdin', 'pwd\r\n']))
 
     message_stdout = ''
     while True:
@@ -87,8 +87,8 @@ async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
         except asyncio.TimeoutError:
             break
 
-        # if message is None:
-        #     break
+        if message is None:
+            break
 
         message = json.loads(message)
         if message[0] == 'stdout':
