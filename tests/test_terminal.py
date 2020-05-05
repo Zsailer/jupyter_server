@@ -69,10 +69,7 @@ def read_all_messages():
     async def _(ws):
         messages = ""
 
-        i = 0
-        while i < 20:
-            i += 1
-            print(f"\n\n\n{i}\n\n\n")
+        while True:
             try:
                 response = await asyncio.wait_for(ws.read_message(), timeout=1.0)
             except asyncio.TimeoutError:
@@ -82,7 +79,7 @@ def read_all_messages():
                 continue
 
             response = json.loads(response)
-            print(f"\n\n\n{response}\n\n\n")
+
             if response[0] == "stdout":
                 messages += response[1]
 
@@ -110,8 +107,6 @@ async def test_terminal_create_with_cwd(
     ws = await ws_fetch(
         'terminals', 'websocket', term_name
     )
-
-    print(type(ws))
 
     await ws.write_message(json.dumps(['stdin', 'pwd\r\n']).encode("utf-8"))
 
