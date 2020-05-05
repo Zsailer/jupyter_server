@@ -30,4 +30,4 @@ jobs:
         pip install -e .[test]
     - name: Run the tests
       run: |
-        pytest tests/test_terminal.py::test_terminal_create_with_kwargs
+        pytest
