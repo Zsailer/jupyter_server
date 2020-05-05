@@ -107,6 +107,7 @@ async def test_terminal_create_with_cwd(
     )
 
     await ws.write_message(json.dumps(['stdin', 'pwd\r']).encode("utf-8"))
+    await asyncio.sleep(5)
     messages = await read_all_messages(ws)
     ws.close()
     assert str(terminal_path) in messages
