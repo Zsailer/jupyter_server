@@ -4,7 +4,6 @@ import pytest
 import json
 import asyncio
 import sys
-import time
 
 # Skip this whole module on Windows. The terminal API leads
 # to timeouts on Windows CI.
@@ -13,7 +12,7 @@ if sys.platform.startswith('win'):
 
 
 @pytest.fixture
-async def kill_all(serverapp):
+def kill_all(serverapp):
     async def _():
         await serverapp.web_app.settings["terminal_manager"].kill_all()
     return _
