@@ -14,9 +14,10 @@ if sys.platform.startswith('win'):
 # Kill all running terminals after each test to avoid cross-test issues
 # with still running terminals.
 @pytest.fixture(autouse=True)
-def kill_all(serverapp):
-    yield
-    serverapp.web_app.settings["terminal_manager"].kill_all()
+async def kill_all(serverapp):
+    def _():
+        await serverapp.web_app.settings["terminal_manager"].kill_all()
+    return _
 
 
 @pytest.fixture
@@ -45,6 +46,7 @@ async def test_terminal_create(fetch):
     data = json.loads(resp_list.body.decode())
 
     assert len(data) == 1
+    kill_all()
 
 
 async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
@@ -67,6 +69,7 @@ async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
     data = json.loads(resp_get.body.decode())
 
     assert data['name'] == term_name
+    kill_all()
 
 
 async def test_terminal_create_with_cwd(
@@ -102,3 +105,4 @@ async def test_terminal_create_with_cwd(
 
     ws.close()
     assert str(terminal_path) in messages
+    kill_all()
