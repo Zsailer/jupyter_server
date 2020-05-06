@@ -11,11 +11,10 @@ if sys.platform.startswith('win'):
     pytest.skip("Terminal API tests time out on Windows.", allow_module_level=True)
 
 
-@pytest.fixture
-def kill_all(serverapp):
-    async def _():
-        await serverapp.web_app.settings["terminal_manager"].kill_all()
-    return _
+@pytest.fixture(autouse=True)
+async def kill_all(serverapp):
+    yield
+    await serverapp.web_app.settings["terminal_manager"].kill_all()
 
 
 @pytest.fixture
@@ -28,7 +27,7 @@ def terminal_path(tmp_path):
     shutil.rmtree(str(subdir), ignore_errors=True)
 
 
-async def test_terminal_create(fetch, kill_all):
+async def test_terminal_create(fetch):
     await fetch(
         'api', 'terminals',
         method='POST',
@@ -44,10 +43,9 @@ async def test_terminal_create(fetch, kill_all):
     data = json.loads(resp_list.body.decode())
 
     assert len(data) == 1
-    await kill_all()
 
 
-async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path, kill_all):
+async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
     resp_create = await fetch(
         'api', 'terminals',
         method='POST',
@@ -67,14 +65,12 @@ async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path, kill_
     data = json.loads(resp_get.body.decode())
 
     assert data['name'] == term_name
-    await kill_all()
 
 
 async def test_terminal_create_with_cwd(
     fetch,
     ws_fetch,
-    terminal_path,
-    kill_all
+    terminal_path
 ):
     resp = await fetch(
         'api', 'terminals',
@@ -104,4 +100,3 @@ async def test_terminal_create_with_cwd(
 
     ws.close()
     assert str(terminal_path) in messages
-    await kill_all()
