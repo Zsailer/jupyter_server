@@ -166,7 +166,6 @@ def serverapp(configurable_serverapp, server_config, argv):
     app.remove_server_info_file()
     app.remove_browser_open_file()
     app.cleanup_kernels()
-    #app.web_app.settings['terminal_manager'].kill_all()
 
 
 @pytest.fixture
