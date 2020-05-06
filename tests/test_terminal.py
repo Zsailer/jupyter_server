@@ -13,7 +13,7 @@ if sys.platform.startswith('win'):
 
 # Kill all running terminals after each test to avoid cross-test issues
 # with still running terminals.
-@pytest.fixture(autouse=True)
+@pytest.fixture
 async def kill_all(serverapp):
     async def _():
         await serverapp.web_app.settings["terminal_manager"].kill_all()
@@ -30,7 +30,7 @@ def terminal_path(tmp_path):
     shutil.rmtree(str(subdir), ignore_errors=True)
 
 
-async def test_terminal_create(fetch):
+async def test_terminal_create(fetch, kill_all):
     await fetch(
         'api', 'terminals',
         method='POST',
@@ -49,7 +49,7 @@ async def test_terminal_create(fetch):
     await kill_all()
 
 
-async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
+async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path, kill_all):
     resp_create = await fetch(
         'api', 'terminals',
         method='POST',
@@ -75,7 +75,8 @@ async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
 async def test_terminal_create_with_cwd(
     fetch,
     ws_fetch,
-    terminal_path
+    terminal_path,
+    kill_all
 ):
     resp = await fetch(
         'api', 'terminals',
