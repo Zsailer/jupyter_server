@@ -15,7 +15,7 @@ if sys.platform.startswith('win'):
 # with still running terminals.
 @pytest.fixture(autouse=True)
 async def kill_all(serverapp):
-    def _():
+    async def _():
         await serverapp.web_app.settings["terminal_manager"].kill_all()
     return _
 
@@ -46,7 +46,7 @@ async def test_terminal_create(fetch):
     data = json.loads(resp_list.body.decode())
 
     assert len(data) == 1
-    kill_all()
+    await kill_all()
 
 
 async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
@@ -69,7 +69,7 @@ async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
     data = json.loads(resp_get.body.decode())
 
     assert data['name'] == term_name
-    kill_all()
+    await kill_all()
 
 
 async def test_terminal_create_with_cwd(
@@ -105,4 +105,4 @@ async def test_terminal_create_with_cwd(
 
     ws.close()
     assert str(terminal_path) in messages
-    kill_all()
+    await kill_all()
