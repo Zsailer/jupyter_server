@@ -442,7 +442,7 @@ def run_sync(maybe_async):
     return wrapped()
 
 
-def eventlogging_schema_fqn(name):
+def jpserver_events_prefix(name):
     """
     Return fully qualified event schema name
 

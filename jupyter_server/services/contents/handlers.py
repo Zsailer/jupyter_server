@@ -15,11 +15,12 @@ from jupyter_server.utils import (
     url_path_join,
     url_escape,
     ensure_async,
-    eventlogging_schema_fqn
+    jpserver_events_prefix
 )
 from jupyter_server.base.handlers import (
     JupyterHandler, APIHandler, path_regex,
 )
+import jupyter_telemetry
 
 
 def validate_model(model, expect_content):
@@ -92,6 +93,10 @@ class ContentsHandler(APIHandler):
         self.finish(json.dumps(model, default=date_default))
 
     @web.authenticated
+    @jupyter_telemetry.event_schema(
+        name=jpserver_events_prefix('contentsmanager-actions'),
+        version=1,
+    )
     async def get(self, path=''):
         """Return a model for a file or directory.
 
@@ -115,14 +120,20 @@ class ContentsHandler(APIHandler):
             path=path, type=type, format=format, content=content,
         ))
         validate_model(model, expect_content=content)
+        # Emit this event.
         self.eventlog.record_event(
-            eventlogging_schema_fqn('contentsmanager-actions'),
-            1,
-            { 'action': 'get', 'path': model['path'] }
+            event={
+                'action': 'get', 
+                'path': model['path']
+            }
         )
         self._finish_model(model, location=False)
 
     @web.authenticated
+    @jupyter_telemetry.event_schema(
+        name=jpserver_events_prefix('contentsmanager-actions'),
+        version=1,
+    )
     async def patch(self, path=''):
         """PATCH renames a file or directory without re-uploading content."""
         cm = self.contents_manager
@@ -133,9 +144,7 @@ class ContentsHandler(APIHandler):
         model = await ensure_async(cm.update(model, path))
         validate_model(model, expect_content=False)
         self.eventlog.record_event(
-            eventlogging_schema_fqn('contentsmanager-actions'),
-            1,
-            {
+            event={
                 'action': 'rename',
                 'path': model['path'],
                 'source_path': path.lstrip(os.path.sep)
@@ -143,7 +152,10 @@ class ContentsHandler(APIHandler):
         )
         self._finish_model(model)
 
-
+    @jupyter_telemetry.event_schema(
+        name=jpserver_events_prefix('contentsmanager-actions'),
+        version=1,
+    )
     async def _copy(self, copy_from, copy_to=None):
         """Copy a file, optionally specifying a target directory."""
         self.log.info(u"Copying {copy_from} to {copy_to}".format(
@@ -154,9 +166,7 @@ class ContentsHandler(APIHandler):
         self.set_status(201)
         validate_model(model, expect_content=False)
         self.eventlog.record_event(
-            eventlogging_schema_fqn('contentsmanager-actions'),
-            1,
-            {
+            event={
                 'action': 'copy',
                 'path': model['path'],
                 'source_path': copy_from.lstrip(os.path.sep)
@@ -164,6 +174,10 @@ class ContentsHandler(APIHandler):
         )
         self._finish_model(model)
 
+    @jupyter_telemetry.event_schema(
+        name=jpserver_events_prefix('contentsmanager-actions'),
+        version=1,
+    )
     async def _upload(self, model, path):
         """Handle upload of a new file to path"""
         self.log.info(u"Uploading file to %s", path)
@@ -171,12 +185,17 @@ class ContentsHandler(APIHandler):
         self.set_status(201)
         validate_model(model, expect_content=False)
         self.eventlog.record_event(
-            eventlogging_schema_fqn('contentsmanager-actions'),
-            1,
-            { 'action': 'upload', 'path': model['path'] }
+            event={ 
+                'action': 'upload', 
+                'path': model['path'] 
+            }
         )
         self._finish_model(model)
 
+    @jupyter_telemetry.event_schema(
+        name=jpserver_events_prefix('contentsmanager-actions'),
+        version=1,
+    )
     async def _new_untitled(self, path, type='', ext=''):
         """Create a new, empty untitled entity"""
         self.log.info(u"Creating new %s in %s", type or 'file', path)
@@ -184,12 +203,17 @@ class ContentsHandler(APIHandler):
         self.set_status(201)
         validate_model(model, expect_content=False)
         self.eventlog.record_event(
-            eventlogging_schema_fqn('contentsmanager-actions'), 1,
-            # Set path to path of created object, not directory it was created in
-            { 'action': 'create', 'path': model['path'] }
+            event={ 
+                'action': 'create', 
+                'path': model['path'] 
+            }
         )
         self._finish_model(model)
 
+    @jupyter_telemetry.event_schema(
+        name=jpserver_events_prefix('contentsmanager-actions'),
+        version=1,
+    )
     async def _save(self, model, path):
         """Save an existing file."""
         chunk = model.get("chunk", None)
@@ -198,9 +222,10 @@ class ContentsHandler(APIHandler):
         model = self.contents_manager.save(model, path)
         validate_model(model, expect_content=False)
         self.eventlog.record_event(
-            eventlogging_schema_fqn('contentsmanager-actions'),
-            1,
-            { 'action': 'save', 'path': model['path'] }
+            event={ 
+                'action': 'save', 
+                'path': model['path'] 
+            }
         )
         self._finish_model(model)
 
@@ -265,6 +290,10 @@ class ContentsHandler(APIHandler):
             await self._new_untitled(path)
 
     @web.authenticated
+    @jupyter_telemetry.event_schema(
+        name=jpserver_events_prefix('contentsmanager-actions'),
+        version=1,
+    )
     async def delete(self, path=''):
         """delete a file in the given path"""
         cm = self.contents_manager
@@ -272,8 +301,10 @@ class ContentsHandler(APIHandler):
         cm.delete(path)
         self.set_status(204)
         self.eventlog.record_event(
-            eventlogging_schema_fqn('contentsmanager-actions'), 1,
-            { 'action': 'delete', 'path': path.lstrip(os.path.sep) }
+            event={ 
+                'action': 'delete', 
+                'path': path.lstrip(os.path.sep) 
+            }
         )
         self.finish()
 

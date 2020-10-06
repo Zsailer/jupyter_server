@@ -38,7 +38,8 @@ properties:
     - rename
     - copy
     - delete
-    category: unrestricted
+    categories: 
+    - unrestricted
     description: |
         Action performed by the ContentsManager API.
 
@@ -70,14 +71,16 @@ properties:
         6. delete
            Delete a file or empty directory at given path
   path:
-    category: personally-identifiable-information
+    categories: 
+    - personally-identifiable-information
     type: string
     description: |
         Logical path on which the operation was performed.
 
         This is a required field.
   source_path:
-    category: personally-identifiable-information
+    categories: 
+    - personally-identifiable-information
     type: string
     description: |
         Source path of an operation when action is 'copy' or 'rename'
