@@ -16,7 +16,6 @@ import jupyter_core.paths
 from jupyter_server.extension import serverextension
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.utils import url_path_join
-from jupyter_server.services.contents.filemanager import AsyncFileContentsManager, FileContentsManager
 
 import nbformat
 
@@ -260,24 +259,6 @@ def kernelspecs(data_dir):
         # Create resources text
         sample_kernel_resources = sample_kernel_dir.joinpath('resource.txt')
         sample_kernel_resources.write_text(some_resource)
-
-
-@pytest.fixture(params=[(FileContentsManager, True),
-                        (FileContentsManager, False),
-                        (AsyncFileContentsManager, True),
-                        (AsyncFileContentsManager, False)])
-def contents_manager(request, tmp_path):
-    contents_manager, use_atomic_writing = request.param
-    if contents_manager.__name__ == "AsyncFileContentsManager" and sys.version_info < (3, 6):
-        pytest.skip("File Contents manager is AsyncFileContentsManager, Python version < 3.6")
-    return contents_manager(root_dir=str(tmp_path), use_atomic_writing=use_atomic_writing)
-
-
-@pytest.fixture(params=[FileContentsManager, AsyncFileContentsManager])
-def file_contents_manager_class(request, tmp_path):
-    if request.param.__name__ == "AsyncFileContentsManager" and sys.version_info < (3, 6):
-        pytest.skip("File Contents manager is AsyncFileContentsManager, Python version < 3.6")
-    return request.param
 
 
 @pytest.fixture
