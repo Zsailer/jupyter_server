@@ -21,6 +21,7 @@ from jupyter_server.serverapp import ServerApp
 from jupyter_server.utils import url_path_join
 from jupyter_server.services.contents.filemanager import FileContentsManager
 from jupyter_server.services.contents.largefilemanager import LargeFileManager
+from jupyter_server.base.handlers import JupyterHandler
 
 
 # List of dependencies needed for this plugin.
@@ -438,3 +439,9 @@ def jp_create_notebook(jp_root_dir):
 def jp_server_cleanup():
     yield
     ServerApp.clear_instance()
+
+
+@pytest.fixture(autouse=True)
+def authorize_all():
+    yield
+    JupyterHandler.user_is_authorized = lambda self, user, action, resource: True
