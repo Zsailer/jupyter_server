@@ -3126,7 +3126,7 @@ class ServerApp(JupyterApp):
                         "    %s" % self.display_url,
                     ]
 
-                self.log.critical("\nDP_DAI2\n"+"\n".join(message))
+                self.log.critical("\n".join(message))
 
     async def _cleanup(self) -> None:
         """General cleanup of files, extensions and kernels created
