@@ -60,7 +60,7 @@ test = [
     "pytest>=7.0,<9",
     "requests",
     "pre-commit",
-    'flaky'
+    "pytest-rerunfailures"
 ]
 docs = [
     "ipykernel",
@@ -175,6 +175,9 @@ testpaths = [
 timeout = 100
 # Restore this setting to debug failures.
 timeout_method = "thread"
+markers = [
+    "flaky: marks tests as flaky (may need to be run multiple times to pass)"
+]
 filterwarnings = [
   "error",
   "ignore:datetime.datetime.utc:DeprecationWarning",
