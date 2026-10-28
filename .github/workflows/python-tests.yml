@@ -127,11 +127,21 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
+      # The pip cache is keyed on "3.15", but the ABI of a pre-release Python can
+      # change between releases. Wheels built for an earlier one and restored from
+      # the cache can segfault, so key the cache on the exact version installed.
+      - name: Install Python
+        id: python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.15"
+          allow-prereleases: true
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           dependency_type: pre
           python_package_manager: pip
           python_version: "3.15"
+          python_cache_key_suffix: ${{ steps.python.outputs.python-version }}
       - name: Run the tests
         run: |
           hatch run test:nowarn || hatch -v run test:nowarn --lf
