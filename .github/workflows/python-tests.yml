@@ -121,6 +121,42 @@ jobs:
         run: |
           hatch -vv run test:nowarn || hatch -v run test:nowarn --lf
 
+  probe_pre:
+    name: Probe prereleases (${{ matrix.os }} #${{ matrix.run }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-latest, ubuntu-26.04]
+        run: [1, 2]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+        with:
+          dependency_type: pre
+          python_package_manager: pip
+          python_version: "3.15"
+      - name: Run the tests and report
+        env:
+          PYTHONFAULTHANDLER: "1"
+        run: |
+          set +e
+          {
+            . /etc/os-release; echo "OS: $PRETTY_NAME"
+            python -VV
+            pip list 2>/dev/null | tr '\n' ';'
+            echo
+          } > env.log 2>&1
+          hatch run test:nowarn > out.log 2>&1
+          rc=$?
+          echo "rc=$rc"
+          echo "::notice title=env ${{ matrix.os }}::$(head -c 4000 env.log | tr '\n' '|')"
+          if [ $rc -ne 0 ]; then
+            echo "::error title=failure rc=$rc ${{ matrix.os }}::$(tail -c 6000 out.log | tr '\n' '|' | sed 's/%/%25/g')"
+          fi
+          exit 0
+
   test_prereleases:
     name: Test Prereleases
     runs-on: ubuntu-latest
