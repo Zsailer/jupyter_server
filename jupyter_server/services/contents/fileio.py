@@ -13,7 +13,6 @@ import os
 import shutil
 from base64 import decodebytes, encodebytes
 from contextlib import asynccontextmanager, contextmanager
-from contextvars import ContextVar
 from functools import partial
 from typing import Any
 
@@ -25,11 +24,6 @@ from traitlets.config import Configurable
 from traitlets.config.configurable import LoggingConfigurable
 
 from jupyter_server.utils import ApiPath, to_api_path, to_os_path
-
-# (manager id, path) of the file locks held by the current task; see `AsyncFileManagerMixin._path_lock`.
-_held_path_locks: ContextVar[frozenset[tuple[int, str]]] = ContextVar(
-    "_held_path_locks", default=frozenset()
-)
 
 
 def replace_file(src, dst):
@@ -493,8 +487,9 @@ class AsyncFileManagerMixin(FileManagerMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Locks for files being read or saved, by (manager id, path). Entries only
-        # exist while someone holds or waits for the lock; see `_path_lock`.
+        # Locks for files being read or saved, by (manager id, path), as
+        # [lock, holders and waiters, owning task]. Entries only exist while someone
+        # holds or waits for the lock; see `_path_lock`.
         self._path_locks: dict[tuple[int, str], list[Any]] = {}
 
     @asynccontextmanager
@@ -506,27 +501,32 @@ class AsyncFileManagerMixin(FileManagerMixin):
         around both keeps readers out until the save has finished.
 
         The lock is reentrant for the task that holds it, so a method that
-        holds it can call another that takes it.
+        holds it can call another that takes it. Tasks it spawns are not the
+        holder and wait like any other.
         """
         # Saving through a symlink writes its target, so key on the resolved path.
         key = (id(self), os.path.realpath(str(os_path)))
-        held = _held_path_locks.get()
-        if key in held:
+        task = asyncio.current_task()
+        entry = self._path_locks.get(key)
+        # Compare tasks, not contexts: a child task copies its parent's context
+        # but must still wait for the lock.
+        if entry is not None and entry[2] is not None and entry[2] is task:
             yield
             return
 
-        locks = self._path_locks
-        entry = locks.setdefault(key, [asyncio.Lock(), 0])
+        entry = self._path_locks.setdefault(key, [asyncio.Lock(), 0, None])
         entry[1] += 1
-        token = _held_path_locks.set(held | {key})
         try:
             async with entry[0]:
-                yield
+                entry[2] = task
+                try:
+                    yield
+                finally:
+                    entry[2] = None
         finally:
-            _held_path_locks.reset(token)
             entry[1] -= 1
             if entry[1] == 0:
-                del locks[key]
+                del self._path_locks[key]
 
     async def _copy(self, src, dest):
         """copy src to dest

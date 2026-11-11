@@ -506,6 +506,28 @@ async def test_path_lock_is_reentrant(tmp_path):
     assert not mixin._path_locks
 
 
+async def test_path_lock_is_not_reentrant_for_child_tasks(tmp_path):
+    """A task spawned under the lock inherits its context but must still wait."""
+    mixin = AsyncFileManagerMixin()
+    path = str(tmp_path / "nb.ipynb")
+    events = []
+
+    async def child():
+        async with mixin._path_lock(path):
+            events.append("child")
+
+    async def parent():
+        async with mixin._path_lock(path):
+            task = asyncio.create_task(child())
+            await asyncio.sleep(0.05)
+            events.append("parent done")
+        await task
+
+    await asyncio.wait_for(parent(), timeout=5)
+    assert events == ["parent done", "child"]
+    assert not mixin._path_locks
+
+
 async def test_read_notebook_still_goes_through_read_file(tmp_path):
     """Subclasses that override _read_file keep working while the path lock is held."""
     calls = []
